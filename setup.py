@@ -8,5 +8,8 @@ setuptools.setup(
 			"nose2",
 			"twine",
 		]
-	}
+	},
+	package_data={
+		"precommit_diffcheck": ["py.typed"],
+	},
 )
