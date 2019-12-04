@@ -1,0 +1,10 @@
+repos:
+-   repo: https://github.com/pre-commit/mirrors-pylint
+    rev: 111f3393e9d599271b9e7409019e4e5d2af55175
+    hooks:
+    -   id: pylint
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 90f8e12be8280d1345144a0ff05e6bacc8c3f7c3
+    hooks:
+    -   id: mypy
+
