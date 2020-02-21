@@ -20,6 +20,6 @@ nose2
 When you're satisfied you'll want to update the version number and do build-and-upload:
 
 ```
-python setup.py sdist
+python setup.py sdist bdist_wheel
 twine upload dist/* --verbose
 ```
