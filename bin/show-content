@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+# pylint: disable=invalid-name
+"""
+Simple program to show the diff I get from my new get_diff_or_content function.
+
+I use this to test the logic with different git scenarios.
+"""
+import argparse
+
+import precommit_diffcheck
+
+def main() -> None:
+	"Main entrypoint"
+	parser = argparse.ArgumentParser()
+	parser.add_argument("files", nargs="*", help="The files to use.")
+	args = parser.parse_args()
+
+	patchset = precommit_diffcheck.get_diff_or_content(args.files)
+	print(patchset)
+
+if __name__ == "__main__":
+	main()
