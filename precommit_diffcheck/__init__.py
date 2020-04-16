@@ -39,8 +39,13 @@ def get_content_as_diff(filenames: Filenames) -> PatchSet:
 	"""Gets the content of a file and converts it into a diff like it was all added."""
 	patchset = PatchSet("")
 	for filename in filenames:
-		with open(filename, "r") as input_:
-			content = input_.read()
+		try:
+			with open(filename, "r") as input_:
+				content = input_.read()
+		except UnicodeDecodeError as ex:
+			LOGGER.warning("Failed to read in %s. Skipping. Error: %s",
+				filename, ex)
+			continue
 		patchedfile = unidiff.patch.PatchedFile(
 			source="/dev/null",
 			target="b/" + filename,
