@@ -2,6 +2,7 @@
 import collections
 from enum import Enum
 import logging
+import os
 import re
 import subprocess
 from typing import Iterable, Iterator, List, Optional
@@ -11,6 +12,16 @@ import unidiff.patch  # type: ignore
 
 LOGGER = logging.getLogger(__name__)
 
+PRE_COMMIT_FROM_REF = "PRE_COMMIT_FROM_REF"
+PRE_COMMIT_ORIGIN = "PRE_COMMIT_ORIGIN"
+PRE_COMMIT_SOURCE = "PRE_COMMIT_SOURCE"
+PRE_COMMIT_TO_REF = "PRE_COMMIT_TO_REF"
+PRE_COMMIT_REF_SPECIFIERS = (
+	PRE_COMMIT_FROM_REF,
+	PRE_COMMIT_ORIGIN,
+	PRE_COMMIT_SOURCE,
+	PRE_COMMIT_TO_REF,
+)
 
 class DiffcheckError(Exception):
 	"Base class for any exceptions from this library"
@@ -78,16 +89,40 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 
 	This is a convenience function that is designed to make it easy for hooks
 	to query a single interface to get the lines that should be considered
-	for the hook. If there are staged changes then it will return the unified
+	for the hook. If the special pre-commit environment variables are present
+	indicating a `pre-commit run --from-ref --to-ref` then those values will
+	be used. If there are staged changes then it will return the unified
 	diff for the staged changes. If there are unstaged changes it will return
 	the unified diff for the unstaged changes. If there are no staged or
 	unstaged changes it will return a unified diff with the entire content of the
 	file.
 
+	This special environment variables provided by pre-commit run tell
+	us that we need to get a diff ourselves from a specific revision to
+	another. For example, if the user performs:
+
+	pre-commit run --source HEAD^ -- origin HEAD
+
+	Then the following environment variables will be set (depending on
+	pre-commit version):
+
+	PRE_COMMIT_FROM_REF=HEAD^
+	PRE_COMMIT_ORIGIN=HEAD^
+	PRE_COMMIT_SOURCE=HEAD
+	PRE_COMMIT_TO_REF=HEAD
+
 	Args:
 		filenames: If present, constrain the diff to the provided files.
 	"""
-	if has_staged_changes(filenames):
+	if has_ref_specifiers():
+		command = ["git", "diff"]
+		from_ref = get_ref_from()
+		if from_ref:
+			command.append(from_ref)
+		to_ref = get_ref_to()
+		if to_ref:
+			command.append(to_ref)
+	elif has_staged_changes(filenames):
 		command = ["git", "diff", "--cached"]
 	elif has_unstaged_changes(filenames):
 		command = ["git", "diff", "HEAD"]
@@ -131,6 +166,23 @@ def get_git_status(filenames: Optional[Filenames] = None) -> List[GitStatusEntry
 			state=FileState(staged_status if is_staged else unstaged_status),
 		))
 	return entries
+
+def get_ref_from() -> Optional[str]:
+	"""Return the 'from' ref pre-commit may have provided."""
+	return os.environ.get(PRE_COMMIT_FROM_REF,
+		os.environ.get(PRE_COMMIT_SOURCE, None))
+
+def get_ref_to() -> Optional[str]:
+	"""Return the 'to' ref pre-commit may have provided."""
+	return os.environ.get(PRE_COMMIT_TO_REF,
+		os.environ.get(PRE_COMMIT_ORIGIN, None))
+
+def has_ref_specifiers() -> bool:
+	"""Return whether or not we have pre-commit provided ref specifiers."""
+	for specifier in PRE_COMMIT_REF_SPECIFIERS:
+		if os.environ.get(specifier, None):
+			return True
+	return False
 
 def has_staged_changes(filenames: Optional[Filenames] = None) -> bool:
 	"""Determine if the current git repository has staged changes or not."""

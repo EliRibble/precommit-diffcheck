@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1
+
+* Honor --to-ref and --from-ref environment variables from pre-commit run
+* Warn-and-ignore unicode decode errors.
+
 ## 1.0
 
 * Reworked some of the APIs,
