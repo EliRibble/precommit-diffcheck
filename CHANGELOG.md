@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2
+
+* Add `get_files_to_analyze` function.
+
 ## 1.1
 
 * Honor --to-ref and --from-ref environment variables from pre-commit run
