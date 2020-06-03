@@ -140,7 +140,7 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 	except subprocess.CalledProcessError as exc:
 		raise DiffcheckError("Failed to get patchset: {}".format(exc))
 
-def get_files_to_analyze(filenames: Iterable[str], patchset: PatchSet = None) -> Iterable[str]:
+def get_files_to_analyze(filenames: List[str], patchset: PatchSet = None) -> List[str]:
 	"""Get the intersection of a list of files and a patchset.
 
 	The idea here is that the user could specify some number of files. There may
