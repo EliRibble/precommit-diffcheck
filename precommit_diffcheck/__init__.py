@@ -140,6 +140,51 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 	except subprocess.CalledProcessError as exc:
 		raise DiffcheckError("Failed to get patchset: {}".format(exc))
 
+def get_files_to_analyze(filenames: Iterable[str], patchset: PatchSet = None) -> Iterable[str]:
+	"""Get the intersection of a list of files and a patchset.
+
+	The idea here is that the user could specify some number of files. There may
+	also be a patchset in play which identifies another set of files. We only want
+	to tell the client of the library to analyze files if they are part of the
+	intersection of the files in the patchset and the files specified by the user.
+
+	If there is no intersection and the list of files has content, we prefer the list
+	of files. If there is no files specified in the file list we prefer the patchset.
+
+	Returns:
+		A list of absolute file paths.
+	"""
+	cwd = os.path.abspath(".")
+	abs_filenames = [os.path.join(cwd, f) for f in filenames]
+
+	git_root = subprocess.check_output(
+		["git", "rev-parse", "--show-toplevel"],
+		encoding="UTF-8").strip()
+
+	if patchset is None:
+		patchset = get_diff_or_content(filenames)
+
+	abs_changed_files = []
+	for patch in patchset:
+		# Remove 'b/' from git patch format
+		target = patch.target_file[2:]
+		# Make the path absolute
+		abs_target = os.path.join(git_root, target)
+		if abs_filenames and abs_target not in abs_filenames:
+			LOGGER.debug("Skipping %s because it wasn't one of the specified files", target)
+			continue
+		abs_changed_files.append(abs_target)
+	if not set(abs_changed_files).intersection(abs_filenames):
+		LOGGER.info((
+			"Looks like there's no overlap between requested files (%s) and "
+			"current dirty git files (%s)."),
+			" ".join(sorted(abs_filenames)), " ".join(sorted(abs_changed_files)))
+		if filenames:
+			LOGGER.info("We'll use the requested files.")
+			return filenames
+		LOGGER.info("We'll use the current git dirty files.")
+	return abs_changed_files
+
 def get_git_status(filenames: Optional[Filenames] = None) -> List[GitStatusEntry]:
 	"""Get the current git status."""
 	command = ["git", "status", "--porcelain"]
