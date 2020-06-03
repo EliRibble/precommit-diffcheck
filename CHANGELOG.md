@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4
+
+* Fix return type on `get_files_to_analyze()`
+
 ## 1.3
 
 * Add `get_git_root()` function.
