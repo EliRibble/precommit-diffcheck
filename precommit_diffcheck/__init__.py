@@ -154,12 +154,9 @@ def get_files_to_analyze(filenames: Iterable[str], patchset: PatchSet = None) ->
 	Returns:
 		A list of absolute file paths.
 	"""
+	git_root = get_git_root()
 	cwd = os.path.abspath(".")
 	abs_filenames = [os.path.join(cwd, f) for f in filenames]
-
-	git_root = subprocess.check_output(
-		["git", "rev-parse", "--show-toplevel"],
-		encoding="UTF-8").strip()
 
 	if patchset is None:
 		patchset = get_diff_or_content(filenames)
@@ -184,6 +181,12 @@ def get_files_to_analyze(filenames: Iterable[str], patchset: PatchSet = None) ->
 			return filenames
 		LOGGER.info("We'll use the current git dirty files.")
 	return abs_changed_files
+
+def get_git_root() -> str:
+	"""Return the absolute path to the root of the current git repository."""
+	return subprocess.check_output(
+		["git", "rev-parse", "--show-toplevel"],
+		encoding="UTF-8").strip()
 
 def get_git_status(filenames: Optional[Filenames] = None) -> List[GitStatusEntry]:
 	"""Get the current git status."""

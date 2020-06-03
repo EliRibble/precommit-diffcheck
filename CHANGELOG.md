@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3
+
+* Add `get_git_root()` function.
+
 ## 1.2
 
 * Add `get_files_to_analyze` function.
