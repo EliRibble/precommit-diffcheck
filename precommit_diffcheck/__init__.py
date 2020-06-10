@@ -170,7 +170,7 @@ def get_files_to_analyze(filenames: List[str], patchset: PatchSet = None) -> Lis
 		if abs_filenames and abs_target not in abs_filenames:
 			LOGGER.debug("Skipping %s because it wasn't one of the specified files", target)
 			continue
-		abs_changed_files.append(abs_target)
+		abs_changed_files.append(os.path.normpath(abs_target))
 	if not set(abs_changed_files).intersection(abs_filenames):
 		LOGGER.info((
 			"Looks like there's no overlap between requested files (%s) and "
@@ -178,7 +178,7 @@ def get_files_to_analyze(filenames: List[str], patchset: PatchSet = None) -> Lis
 			" ".join(sorted(abs_filenames)), " ".join(sorted(abs_changed_files)))
 		if filenames:
 			LOGGER.info("We'll use the requested files.")
-			return filenames
+			return [os.path.normpath(f) for f in filenames]
 		LOGGER.info("We'll use the current git dirty files.")
 	return abs_changed_files
 

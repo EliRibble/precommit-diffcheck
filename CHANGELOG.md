@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5
+
+* Return normalized paths from `get_files_to_analyze()`
+
 ## 1.4
 
 * Fix return type on `get_files_to_analyze()`
