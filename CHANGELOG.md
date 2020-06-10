@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6
+
+* Normalize filenames when providing file content as a diff
+
 ## 1.5
 
 * Return normalized paths from `get_files_to_analyze()`

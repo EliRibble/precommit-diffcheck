@@ -114,6 +114,8 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 	Args:
 		filenames: If present, constrain the diff to the provided files.
 	"""
+	filenames = filenames or []
+	normalized_filenames = [os.path.normpath(f) for f in filenames]
 	if has_ref_specifiers():
 		command = ["git", "diff"]
 		from_ref = get_ref_from()
@@ -122,19 +124,21 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 		to_ref = get_ref_to()
 		if to_ref:
 			command.append(to_ref)
-	elif has_staged_changes(filenames):
+	elif has_staged_changes(normalized_filenames):
 		command = ["git", "diff", "--cached"]
-	elif has_unstaged_changes(filenames):
+	elif has_unstaged_changes(normalized_filenames):
 		command = ["git", "diff", "HEAD"]
 	else:
-		if not filenames:
+		if not normalized_filenames:
 			raise DiffcheckError(("You have no staged changes, no unstaged changes,"
 				" and didn't specify any filenames. This guarantees there is nothing "
 				"to analyze, which I'm pretty sure is not what you want."))
-		return get_content_as_diff(filenames)
-	if filenames:
-		command += filenames
+		LOGGER.debug("git workspace is clean, returning the content of files as a diff")
+		return get_content_as_diff(normalized_filenames)
+	if normalized_filenames:
+		command += normalized_filenames
 	try:
+		LOGGER.debug("Executing %s", command)
 		diff_content = subprocess.check_output(command).decode("utf-8")
 		return PatchSet(diff_content)
 	except subprocess.CalledProcessError as exc:
@@ -156,10 +160,11 @@ def get_files_to_analyze(filenames: List[str], patchset: PatchSet = None) -> Lis
 	"""
 	git_root = get_git_root()
 	cwd = os.path.abspath(".")
-	abs_filenames = [os.path.join(cwd, f) for f in filenames]
+	normalized_filenames = [os.path.normpath(f) for f in filenames]
+	abs_filenames = [os.path.normpath(os.path.join(cwd, f)) for f in normalized_filenames]
 
 	if patchset is None:
-		patchset = get_diff_or_content(filenames)
+		patchset = get_diff_or_content(normalized_filenames)
 
 	abs_changed_files = []
 	for patch in patchset:
