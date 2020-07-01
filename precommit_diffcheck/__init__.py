@@ -204,8 +204,7 @@ def get_files_to_analyze(filenames: List[str], patchset: PatchSet = None) -> Lis
 	normalized_filenames = [os.path.normpath(f) for f in filenames]
 	abs_filenames = [os.path.normpath(os.path.join(cwd, f)) for f in normalized_filenames]
 
-	if patchset is None:
-		patchset = get_diff_or_content(normalized_filenames)
+	patchset = patchset or get_diff_or_content(normalized_filenames)
 
 	abs_changed_files = []
 	for patch in patchset:
