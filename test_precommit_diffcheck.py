@@ -176,3 +176,51 @@ index 8d58bdd..3ba9934 100755
 			(False, '                       "responseStatusCode": 427,\n', 16),
 		)]
 		self.assertEqual(lines, expected)
+
+class TestAddedLines(unittest.TestCase):
+	"Test the ability to calculated the added lines by file."
+	TEST_PATCHSET = PatchSet("""
+diff --git a/file1.py b/file1.py
+index 268983e..bdde27b 100644
+--- a/file1.py
++++ b/file1.py
+@@ -1,5 +1,9 @@
++# A module for saying stuff.
+ def main():
+ 	print("Hello world. File 1.")
+ 	print("This is just")
+ 	print("A file for getting")
+ 	print("A diff.")
++
++import helper
++helper.help()
+diff --git a/file2.py b/file2.py
+index f4f14b5..f3439c2 100644
+--- a/file2.py
++++ b/file2.py
+@@ -1,5 +1,4 @@
+-def helper():
++def help():
+ 	print("This file does")
+-	print("nothing.")
+ 	print("But help.")
+ 
+""")
+	def test_get_added_lines_for_file(self) -> None:
+		"Do we properly get the set of added lines?"
+		added_lines = precommit_diffcheck.get_added_lines_for_file(
+			TestAddedLines.TEST_PATCHSET,
+			"b/file1.py",
+		)
+		self.assertEqual(added_lines, {1, 7, 8, 9})
+
+	def test_get_filename_to_added_lines(self) -> None:
+		"Do we properly get a mapping of filenames to added lines?"
+		filename_to_added_lines = precommit_diffcheck.get_filename_to_added_lines(
+			TestAddedLines.TEST_PATCHSET,
+		)
+		expected = {
+			"file1.py": {1, 7, 8, 9},
+			"file2.py": {1},
+		}
+		self.assertEqual(filename_to_added_lines, expected)

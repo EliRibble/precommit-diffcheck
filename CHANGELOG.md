@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7
+
+* Add `get_added_lines_for_file()`
+* Add `get_filname_to_added_lines()`
+
 ## 1.6
 
 * Normalize filenames when providing file content as a diff

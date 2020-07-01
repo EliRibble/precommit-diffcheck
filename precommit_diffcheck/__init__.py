@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import subprocess
-from typing import Iterable, Iterator, List, Optional
+from typing import Iterable, Iterator, List, Mapping, Optional, Set
 
 from unidiff import Hunk, PatchSet  # type: ignore
 import unidiff.patch  # type: ignore
@@ -45,6 +45,26 @@ GitStatusEntry = collections.namedtuple("GitStatusEntry", (
 	"is_staged", # True if the change is staged, otherwise unstaged
 	"state", # FileState, represents what happened to the file
 ))
+
+def get_added_lines_for_file(patchset: PatchSet, filename: str) -> Set[int]:
+	"""Get the set of lines added for a given filename in a patchset.
+
+	Args:
+		patchset: The patchset to extract added lines from.
+		filename: The path of the file to use in calculating added lines.
+			The path should match whatever is in the patchset.
+	Returns:
+		The set of lines added for the given filename in the patchset.
+	"""
+	results = set()
+	for patch in patchset:
+		if patch.target_file != filename:
+			continue
+		for hunk in patch:
+			for line in hunk:
+				if line.is_added:
+					results.add(line.target_line_no)
+	return results
 
 def get_content_as_diff(filenames: Filenames) -> PatchSet:
 	"""Gets the content of a file and converts it into a diff like it was all added."""
@@ -143,6 +163,27 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 		return PatchSet(diff_content)
 	except subprocess.CalledProcessError as exc:
 		raise DiffcheckError("Failed to get patchset: {}".format(exc))
+
+def get_filename_to_added_lines(patchset: Optional[PatchSet] = None) -> Mapping[str, Set[int]]:
+	"""Get a mapping of filenames to the line numbers added.
+
+	Given a PatchSet this will return a mapping of the filenames in the PatchSet
+	to the set of lines that were added in the PatchSet. This is useful when
+	a hook gets a list of violations that correspond to a specific filename
+	and line number and the hook wants to filter out any violations that do
+	not apply to the given PatchSet.
+
+	Args:
+		patchset: The patchset to operate on, or None to calculate the patchset.
+	Returns:
+		A mapping of filenames relative to the git repository root to the set
+		of line numbers, starting at 1, that were added in the patchset.
+	"""
+	patchset = patchset or get_diff_or_content()
+	unique_filenames = {patch.target_file for patch in patchset}
+	return {
+		filename[2:]: get_added_lines_for_file(patchset, filename) for filename in unique_filenames
+	}
 
 def get_files_to_analyze(filenames: List[str], patchset: PatchSet = None) -> List[str]:
 	"""Get the intersection of a list of files and a patchset.
