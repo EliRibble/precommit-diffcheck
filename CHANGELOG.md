@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8
+
+* Add an `lru_cache` on `get_git_root()` for performance.
+
 ## 1.7
 
 * Add `get_added_lines_for_file()`

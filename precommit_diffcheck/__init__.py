@@ -1,6 +1,7 @@
 "All the logic for the module"
 import collections
 from enum import Enum
+import functools
 import logging
 import os
 import re
@@ -227,6 +228,7 @@ def get_files_to_analyze(filenames: List[str], patchset: PatchSet = None) -> Lis
 		LOGGER.info("We'll use the current git dirty files.")
 	return abs_changed_files
 
+@functools.lru_cache()
 def get_git_root() -> str:
 	"""Return the absolute path to the root of the current git repository."""
 	return subprocess.check_output(
