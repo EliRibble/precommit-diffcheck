@@ -47,6 +47,44 @@ GitStatusEntry = collections.namedtuple("GitStatusEntry", (
 	"state", # FileState, represents what happened to the file
 ))
 
+def filter_filenames(filenames: Iterable[str], exclusions: Iterable[re.Pattern]) -> Iterable[str]:
+	"""Filter the provided filenames by the regex exclusions.
+
+	Args:
+		filenames: The list of filenames provided by the user. These will generally be
+			relative paths within a git repository.
+		exclusions: A list of regex patterns to apply to the filenames. The exclusions
+			are applied after transforming the filenames to be relative to the git
+			repository root.
+	Returns:
+		file paths relative to git root that were not excluded.
+	"""
+	# Convert provided filenames into absolute paths
+	cwd = os.path.abspath(".")
+	abs_filenames = [os.path.join(cwd, f) for f in filenames]
+
+	# Use the git root for calculating absolute paths
+	git_root = get_git_root()
+
+	results = []
+	for abs_filename in abs_filenames:
+		common_path = os.path.commonprefix([git_root, abs_filename])
+		if common_path != git_root:
+			LOGGER.warning((
+				"Skipping %s because it appears to be outside of the git source "
+				"tree (common path is '%s')."), abs_filename, common_path)
+			continue
+		git_relative_path = os.path.relpath(abs_filename, git_root)
+		if is_excluded(git_relative_path, exclusions):
+			continue
+		# Always filter out internal .git files
+		if git_relative_path.startswith(".git/"):
+			LOGGER.debug("Skipping '%s' because it appears to be a git internal file.", git_relative_path)
+			continue
+		results.append(git_relative_path)
+	return results
+
+
 def get_added_lines_for_file(patchset: PatchSet, filename: str) -> Set[int]:
 	"""Get the set of lines added for a given filename in a patchset.
 
@@ -288,6 +326,23 @@ def has_unstaged_changes(filenames: Optional[Filenames] = None) -> bool:
 	"""Determine if the current git repository has unstaged changes."""
 	status = get_git_status(filenames)
 	return any(not s.is_staged for s in status)
+
+def is_excluded(git_relative_path: str, exclusions: Iterable[re.Pattern]) -> bool:
+	"""True if the provided git-relative path matches one of the exclusion patterns.
+
+	Args:
+		git_relative_path: The path of some file relative to the git repository root.
+		exclusions: An iterable of regex patterns identifying file paths to exclude.
+	Returns:
+		True if the file should be excluded based on the exclusion patterns.
+	"""
+	for exclusion in exclusions:
+		match = exclusion.match(git_relative_path)
+		if match:
+			LOGGER.info("Excluding '%s'", git_relative_path)
+			LOGGER.debug("Matching pattern was '%s'", exclusion.pattern)
+			return True
+	return False
 
 def lines_added(patchset: Optional[PatchSet] = None) -> Iterator[Diffline]:
 	"Get the added lines. A convenience wrapper for changedlines."

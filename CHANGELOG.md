@@ -2,6 +2,7 @@
 
 ## 1.8
 
+* Add `filter_filenames()` and `is_excluded()` functions.
 * Add an `lru_cache` on `get_git_root()` for performance.
 
 ## 1.7

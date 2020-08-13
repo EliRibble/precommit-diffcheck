@@ -1,6 +1,8 @@
 "Test module for precommit_diffcheck"
 import contextlib
+import re
 import subprocess
+from typing import Iterable
 import unittest
 from unittest import mock
 
@@ -224,3 +226,42 @@ index f4f14b5..f3439c2 100644
 			"file2.py": {1},
 		}
 		self.assertEqual(filename_to_added_lines, expected)
+
+class TestExclusion(unittest.TestCase):
+	"Test logic around excluding files."
+	@params(
+		((re.compile(r"foo/\w+\.txt"),),),
+		((re.compile("not matching"), re.compile("foo/")),),
+	)
+	def test_is_excluded(self, exclusions: Iterable[re.Pattern]):
+		"Do we detect when exclusions match?"
+		result = precommit_diffcheck.is_excluded("foo/bar.txt", exclusions)
+		self.assertTrue(result)
+
+	@params(
+		((re.compile("not matching"),),),
+		((re.compile(r"foo/\w+\.tx$"), re.compile(r"^bar\.txt")),),
+	)
+	def test_not_is_excluded(self, exclusions: Iterable[re.Pattern]):
+		"Do we detect when exclusions don't match?"
+		result = precommit_diffcheck.is_excluded("foo/bar.txt", exclusions)
+		self.assertFalse(result)
+
+	@params(
+		((
+			re.compile(r"foo/"),
+		), []),
+		((
+			re.compile(r"foo/\w+\.txt"),
+		), []),
+		((
+			re.compile(r"foo/bar\.txt"),
+		), ["foo/baz.txt",])
+		)
+	def test_filter_files(self, exclusions: Iterable[re.Pattern], expected: Iterable[str]):
+		"Do we filter out filenames that match?"
+		results = precommit_diffcheck.filter_filenames([
+			"foo/bar.txt",
+			"foo/baz.txt",
+		], exclusions)
+		self.assertEqual(expected, results)
