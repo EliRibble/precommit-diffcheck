@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9
+
+* Restore support for Python 3.6
+
 ## 1.8
 
 * Add `filter_filenames()` and `is_excluded()` functions.

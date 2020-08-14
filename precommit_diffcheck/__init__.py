@@ -6,7 +6,7 @@ import logging
 import os
 import re
 import subprocess
-from typing import Iterable, Iterator, List, Mapping, Optional, Set
+from typing import Iterable, Iterator, List, Mapping, Optional, Pattern, Set
 
 from unidiff import Hunk, PatchSet  # type: ignore
 import unidiff.patch  # type: ignore
@@ -47,7 +47,7 @@ GitStatusEntry = collections.namedtuple("GitStatusEntry", (
 	"state", # FileState, represents what happened to the file
 ))
 
-def filter_filenames(filenames: Iterable[str], exclusions: Iterable[re.Pattern]) -> Iterable[str]:
+def filter_filenames(filenames: Iterable[str], exclusions: Iterable[Pattern]) -> Iterable[str]:
 	"""Filter the provided filenames by the regex exclusions.
 
 	Args:
@@ -327,7 +327,7 @@ def has_unstaged_changes(filenames: Optional[Filenames] = None) -> bool:
 	status = get_git_status(filenames)
 	return any(not s.is_staged for s in status)
 
-def is_excluded(git_relative_path: str, exclusions: Iterable[re.Pattern]) -> bool:
+def is_excluded(git_relative_path: str, exclusions: Iterable[Pattern]) -> bool:
 	"""True if the provided git-relative path matches one of the exclusion patterns.
 
 	Args:

@@ -2,7 +2,7 @@
 import contextlib
 import re
 import subprocess
-from typing import Iterable
+from typing import Iterable, Pattern
 import unittest
 from unittest import mock
 
@@ -233,7 +233,7 @@ class TestExclusion(unittest.TestCase):
 		((re.compile(r"foo/\w+\.txt"),),),
 		((re.compile("not matching"), re.compile("foo/")),),
 	)
-	def test_is_excluded(self, exclusions: Iterable[re.Pattern]):
+	def test_is_excluded(self, exclusions: Iterable[Pattern]):
 		"Do we detect when exclusions match?"
 		result = precommit_diffcheck.is_excluded("foo/bar.txt", exclusions)
 		self.assertTrue(result)
@@ -242,7 +242,7 @@ class TestExclusion(unittest.TestCase):
 		((re.compile("not matching"),),),
 		((re.compile(r"foo/\w+\.tx$"), re.compile(r"^bar\.txt")),),
 	)
-	def test_not_is_excluded(self, exclusions: Iterable[re.Pattern]):
+	def test_not_is_excluded(self, exclusions: Iterable[Pattern]):
 		"Do we detect when exclusions don't match?"
 		result = precommit_diffcheck.is_excluded("foo/bar.txt", exclusions)
 		self.assertFalse(result)
@@ -258,7 +258,9 @@ class TestExclusion(unittest.TestCase):
 			re.compile(r"foo/bar\.txt"),
 		), ["foo/baz.txt",])
 		)
-	def test_filter_files(self, exclusions: Iterable[re.Pattern], expected: Iterable[str]):
+	def test_filter_files(self,
+			exclusions: Iterable[Pattern],
+			expected: Iterable[str]):
 		"Do we filter out filenames that match?"
 		results = precommit_diffcheck.filter_filenames([
 			"foo/bar.txt",
