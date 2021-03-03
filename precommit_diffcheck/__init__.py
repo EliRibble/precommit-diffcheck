@@ -204,8 +204,27 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 		command += normalized_filenames
 	try:
 		LOGGER.debug("Executing %s", command)
-		diff_content = subprocess.check_output(command).decode("utf-8")
-		return PatchSet(diff_content)
+		diff_content = subprocess.check_output(command)
+		try:
+			unicode_content = diff_content.decode("utf-8")
+			return PatchSet(unicode_content)
+		except UnicodeDecodeError as ex:
+			LOGGER.error((
+				"Running the command '%s' produced a diff that cannot be decoded as unicode: "
+				"%s\nIf you are introducing the bad Unicode you should fix the file in question.  "
+				"If the bad Unicode has already been introduced there may not be much you can "
+				"do now without rewriting git history. As near as I can tell, the content near "
+				"the bad Unicode is character %d to %d:\n\n"
+				"*** begin ***\n"
+				"...%s<bad unicode here>%s...\n"
+				"*** end ***"),
+				command,
+				ex,
+				ex.start,
+				ex.end,
+				diff_content[max(0, ex.start - 100):ex.start-1].decode("utf-8"),
+				diff_content[ex.end+1:min(len(diff_content), ex.end + 100)].decode("utf-8"))
+			raise
 	except subprocess.CalledProcessError as exc:
 		raise DiffcheckError("Failed to get patchset: {}".format(exc))
 

@@ -2,6 +2,7 @@
 
 ## 1.10
 
+* Show useful error when we can't get a diff due to Unicode issues.
 * Improve commands for getting diffs to handle --from-ref better
 
 ## 1.9
