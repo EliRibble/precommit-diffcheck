@@ -176,17 +176,23 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 	filenames = filenames or []
 	normalized_filenames = [os.path.normpath(f) for f in filenames]
 	if has_ref_specifiers():
-		command = ["git", "diff"]
 		from_ref = get_ref_from()
-		if from_ref:
-			command.append(from_ref)
 		to_ref = get_ref_to()
-		if to_ref:
-			command.append(to_ref)
-	elif has_staged_changes(normalized_filenames):
-		command = ["git", "diff", "--cached"]
+		if from_ref and to_ref:
+			command = ["git", "diff-tree", "-p", from_ref, to_ref]
+		elif from_ref:
+			command = ["git", "diff-tree", "-p", from_ref, "HEAD"]
+		elif to_ref:
+			raise DiffcheckError(
+				"You cannot specify PRE_COMMIT_TO_REF without an accompanying "
+				"PRE_COMMIT_FROM_REF.")
+		raise AssertionError(
+			"Somehow we have ref specifiers but they are both 'None'. This means "
+			"my programmer made a wrong assumption - please file a bug for me.")
+	if has_staged_changes(normalized_filenames):
+		command = ["git", "diff-index", "-p", "--cached"]
 	elif has_unstaged_changes(normalized_filenames):
-		command = ["git", "diff", "HEAD"]
+		command = ["git", "diff-files", "-p"]
 	else:
 		if not normalized_filenames:
 			raise DiffcheckError(("You have no staged changes, no unstaged changes,"

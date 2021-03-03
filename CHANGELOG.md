@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10
+
+* Improve commands for getting diffs to handle --from-ref better
+
 ## 1.9
 
 * Restore support for Python 3.6
