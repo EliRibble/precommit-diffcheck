@@ -193,7 +193,7 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 	if has_staged_changes(normalized_filenames):
 		command = ["git", "diff-index", "-p", "--cached", "HEAD"]
 	elif has_unstaged_changes(normalized_filenames):
-		command = ["git", "diff-files", "-p", "HEAD"]
+		command = ["git", "diff-files", "-p"]
 	else:
 		if not normalized_filenames:
 			raise DiffcheckError(("You have no staged changes, no unstaged changes,"
