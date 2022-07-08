@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12
+
+* Fix error with unstaged changes and diff created in 1.11
+* Fix error with --from-ref/--to-ref created even earlier.
+
 ## 1.11
 
 * Emit `precommit_diffcheck.DiffcheckError` instead of `UnicodeDecode` exceptions on failure to decode content. Also avoid double-decoding in failure.
