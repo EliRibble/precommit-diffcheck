@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11
+
+* Emit `precommit_diffcheck.DiffcheckError` instead of `UnicodeDecode` exceptions on failure to decode content. Also avoid double-decoding in failure.
+* Fix diff command when --from-ref/--to-ref is not provided (default case)
+
 ## 1.10
 
 * Show useful error when we can't get a diff due to Unicode issues.
