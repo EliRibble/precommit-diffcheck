@@ -190,9 +190,9 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 			"Somehow we have ref specifiers but they are both 'None'. This means "
 			"my programmer made a wrong assumption - please file a bug for me.")
 	if has_staged_changes(normalized_filenames):
-		command = ["git", "diff-index", "-p", "--cached"]
+		command = ["git", "diff-index", "-p", "--cached", "HEAD"]
 	elif has_unstaged_changes(normalized_filenames):
-		command = ["git", "diff-files", "-p"]
+		command = ["git", "diff-files", "-p", "HEAD"]
 	else:
 		if not normalized_filenames:
 			raise DiffcheckError(("You have no staged changes, no unstaged changes,"
