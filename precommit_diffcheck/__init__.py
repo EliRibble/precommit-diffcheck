@@ -222,11 +222,11 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 				ex,
 				ex.start,
 				ex.end,
-				diff_content[max(0, ex.start - 100):ex.start-1].decode("utf-8"),
-				diff_content[ex.end+1:min(len(diff_content), ex.end + 100)].decode("utf-8"))
-			raise
+				diff_content[max(0, ex.start - 100):ex.start-1],
+				diff_content[ex.end+1:min(len(diff_content), ex.end + 100)])
+			raise DiffcheckError("Failed to get diff content for {}:{}".format(command, ex))
 	except subprocess.CalledProcessError as exc:
-		raise DiffcheckError("Failed to get patchset: {}".format(exc))
+		raise DiffcheckError("Failed to get patchset from {}: {}".format(command, exc))
 
 def get_filename_to_added_lines(patchset: Optional[PatchSet] = None) -> Mapping[str, Set[int]]:
 	"""Get a mapping of filenames to the line numbers added.
