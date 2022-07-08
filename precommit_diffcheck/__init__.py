@@ -186,9 +186,10 @@ def get_diff_or_content(filenames: Optional[Filenames] = None) -> PatchSet:
 			raise DiffcheckError(
 				"You cannot specify PRE_COMMIT_TO_REF without an accompanying "
 				"PRE_COMMIT_FROM_REF.")
-		raise AssertionError(
-			"Somehow we have ref specifiers but they are both 'None'. This means "
-			"my programmer made a wrong assumption - please file a bug for me.")
+		else:
+			raise AssertionError(
+				"Somehow we have ref specifiers but they are both 'None'. This means "
+				"my programmer made a wrong assumption - please file a bug for me.")
 	if has_staged_changes(normalized_filenames):
 		command = ["git", "diff-index", "-p", "--cached", "HEAD"]
 	elif has_unstaged_changes(normalized_filenames):
